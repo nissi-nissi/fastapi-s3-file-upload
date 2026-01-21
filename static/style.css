@@ -6,53 +6,40 @@
 }
 
 body {
-  height: 100vh;
+  background: black;
   overflow: hidden;
-  background: radial-gradient(circle at top, #06090f, #000);
-  color: white;
+  height: 100vh;
 }
 
-/* Canvas */
-canvas {
+#bg {
   position: fixed;
   inset: 0;
   z-index: -1;
 }
 
-/* Foreground UI */
 .center {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  z-index: 10;
+  color: white;
 }
 
 h1 {
-  font-size: 2.6rem;
   margin-bottom: 30px;
-  color: #ffffff;
-  text-shadow: 0 0 18px rgba(255,255,255,0.35);
+  font-size: 28px;
 }
 
 .upload-box {
+  display: inline-block;
   padding: 20px 40px;
   border: 2px solid white;
-  border-radius: 12px;
   cursor: pointer;
-  background: rgba(255,255,255,0.06);
-  color: white;
-  transition: 0.3s;
-}
-
-.upload-box:hover {
-  background: rgba(255,255,255,0.12);
-  transform: scale(1.06);
-  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  font-size: 16px;
 }
 
 #status {
-  margin-top: 15px;
-  color: #ddd;
+  margin-top: 20px;
 }
+

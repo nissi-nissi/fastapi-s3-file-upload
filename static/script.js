@@ -1,4 +1,3 @@
-// ================= CANVAS =================
 const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
 
@@ -13,20 +12,17 @@ window.addEventListener("resize", resize);
 const terms = [
   "FILES","UPLOAD","API","FASTAPI","S3","CLOUD","LOGS","DATA",
   "BACKEND","SERVER","STORAGE","DEPLOY","LINUX","SECURITY",
-  "PIPELINE","DATABASE","DEVOPS","PYTHON","REQUEST","RESPONSE",
-  "AUTH","QUEUE","CACHE","MONITOR","TRACE","CONFIG","NETWORK"
+  "PIPELINE","DATABASE","DEVOPS","PYTHON","REQUEST","RESPONSE"
 ];
 
 const nodes = Array.from({ length: 100 }, () => ({
-  x: Math.random() * innerWidth,
-  y: Math.random() * innerHeight,
-  z: Math.random() * 1 + 0.3,   // depth
-  vx: (Math.random() - 0.5) * 0.35,
-  vy: (Math.random() - 0.5) * 0.35,
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  vx: (Math.random() - 0.5) * 0.3,
+  vy: (Math.random() - 0.5) * 0.3,
   text: terms[Math.floor(Math.random() * terms.length)]
 }));
 
-// ================= ANIMATION =================
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -37,19 +33,17 @@ function animate() {
     if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
     if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
 
-    // draw word
-    ctx.fillStyle = "rgba(255, 165, 0, 0.75)";
-    ctx.font = `${14 * n.z}px monospace`;
+    ctx.fillStyle = "rgba(255,140,0,0.7)";
+    ctx.font = "14px monospace";
     ctx.fillText(n.text, n.x, n.y);
 
-    // connections
     nodes.forEach(m => {
       const dx = n.x - m.x;
       const dy = n.y - m.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < 170) {
-        ctx.strokeStyle = "rgba(255, 165, 0, 0.22)";
+      if (dist < 150) {
+        ctx.strokeStyle = "rgba(255,140,0,0.25)";
         ctx.beginPath();
         ctx.moveTo(n.x, n.y);
         ctx.lineTo(m.x, m.y);
@@ -62,3 +56,29 @@ function animate() {
 }
 
 animate();
+
+// ================= UPLOAD =================
+const fileInput = document.getElementById("fileInput");
+const status = document.getElementById("status");
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  status.textContent = "Uploading...";
+
+  try {
+    const res = await fetch("/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    status.textContent = "Uploaded: " + data.filename;
+  } catch {
+    status.textContent = "Upload failed";
+  }
+});

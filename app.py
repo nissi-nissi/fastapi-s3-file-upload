@@ -1,66 +1,45 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 import boto3
 import os
-from botocore.exceptions import ClientError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
-# -----------------------------
-# Serve Frontend (STATIC FILES)
-# -----------------------------
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse("static/index.html")
-
-# -----------------------------
-# AWS CONFIG (from ENV VARS)
-# -----------------------------
-S3_BUCKET = os.getenv("S3_BUCKET")
-AWS_REGION = os.getenv("AWS_DEFAULT_REGION")
+# Allow frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 s3 = boto3.client(
     "s3",
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=AWS_REGION
+    region_name=os.getenv("AWS_REGION")
 )
 
-# -----------------------------
-# ALLOWED FILE TYPES
-# -----------------------------
-ALLOWED_EXTENSIONS = {".csv", ".xls", ".xlsx"}
+BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
-# -----------------------------
-# UPLOAD ENDPOINT
-# -----------------------------
+@app.get("/")
+def root():
+    return {"status": "API running"}
+
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file selected")
+    contents = await file.read()
 
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail="Only CSV, XLS, XLSX files are allowed"
-        )
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=file.filename,
+        Body=contents
+    )
 
-    try:
-        s3.upload_fileobj(
-            file.file,
-            S3_BUCKET,
-            file.filename,
-            ExtraArgs={"ContentType": file.content_type}
-        )
-    except ClientError as e:
-        print("🔥 S3 ERROR:", e)
-        raise HTTPException(status_code=500, detail="S3 upload failed")
-
-    return JSONResponse({
-        "filename": file.filename,
-        "message": "Upload successful"
-    })
+    return {
+        "message": "Upload successful",
+        "filename": file.filename
+    }
